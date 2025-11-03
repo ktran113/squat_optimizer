@@ -18,8 +18,10 @@ def run_pose(video_path, weights='yolov8s-pose.pt'):
         person_idx = int(frame.boxes.conf.argmax().item())
         xy.append(frame.keypoints.xy[person_idx].cpu().numpy().astype(np.float32))
 
-        if frame.keypoints.conf == None:
+        if frame.keypoints.conf is not None:
             con.append(frame.keypoints.conf[person_idx].cpu().numpy().astype(np.float32))
+        else:
+            con.append(np.zeros(17,), dtype=np.float32)
 
     return np.stack(xy), np.stack(con)
 
