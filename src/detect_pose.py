@@ -1,3 +1,5 @@
+#Extracts keypoints and confidence using yolov8 pose estimation models 
+#returns an array of coordinates their confidences
 def run_pose(video_path, weights='yolov8s-pose.pt'):
     from ultralytics import YOLO
     import numpy as np

@@ -28,22 +28,7 @@ KEYPOINT_NAMES = [
 
 
 def count_reps_from_depth(depth_over_time, min_depth_threshold=0, min_distance=30):
-    """
-    Count reps by finding peaks in squat depth.
-    
-    Parameters:
-    -----------
-    depth_over_time : np.ndarray
-        Hip-knee depth over time (from squat_depth function)
-    min_depth_threshold : float
-        Minimum depth to count as a rep (0 = parallel)
-    min_distance : int
-        Minimum frames between reps
-        
-    Returns:
-    --------
-    np.ndarray : Frame indices where each rep bottoms out
-    """
+
     # Find peaks (bottoms of squats) where depth is positive (at/below parallel)
     peaks, _ = find_peaks(depth_over_time, height=min_depth_threshold, distance=min_distance)
     return peaks
