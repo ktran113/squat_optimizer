@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.signal import find_peaks
 
 COCO = dict(L_hip=11, R_hip=12, L_knee=13, R_knee=14,L_ank=15, R_ank=16)
 
@@ -21,13 +22,9 @@ def sideSelector(xy, con):
 
     return(xy[:, hip, :], xy[:, knee, :], xy[:, ank, :])
 
-
-
-
-    #A: Hip
-    #B: Knee
-    #C: Ankles
-
+    #A Hip
+    #B Knee
+    #C Ankles
 def angle(A, B, C): #cos(theta) = (v1 dot v2) / mag(v1) * mag(v2)
     v1 = A - B
     v2 = C - B
@@ -40,13 +37,29 @@ def angle(A, B, C): #cos(theta) = (v1 dot v2) / mag(v1) * mag(v2)
     cos = np.clip(cos, -1.0, 1.0)
     return np.degrees(np.arccos(cos))
 
-def knee_angle(knee, hip, ank):
-    return angle(hip, knee, ank)
-
-def squat_depth(knee, hip): 
+#Returns a boolean array that returns whether or not that rep is parallel or lower
+def squat_depth_stamps(hip, knee): 
     knee = knee[:,1]
     hip = hip[:,1]
 
-    depth = hip - knee
+    depth_over_time = hip - knee
+
+    #Lowest points per rep
+    peaks, _ = find_peaks(depth_over_time, 0, 30)
+    return peaks
+    #depth_over_time[peaks] >= error
+
+def knee_angle(hip, knee, ank):
+    return angle(hip, knee, ank)
+
+def hip_heel(hip, ank, error):
+    lineup = hip[:,0] - ank[:,0]
+    result = []
+    for i in range(len(lineup)):
+        if lineup[i] > abs(lineup[i] + error):
+            result.append(0)
+        else:
+            result.append(1)
+
 
     
