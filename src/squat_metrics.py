@@ -68,5 +68,12 @@ def rep_count(hip, knee):
     return peaks
     #depth_over_time[peaks] >= error
 
+def rep_tempo(rep_bottom_frames, fps = 30):
+    """
+    Returns an array of how long each rep took
+    """
+    rep_times = np.diff(rep_bottom_frames) / fps
+    return rep_times
+
 
     
