@@ -1,10 +1,11 @@
 #Extracts keypoints and confidence using yolov8 pose estimation models 
 #returns an array of coordinates their confidences
-def run_pose(video_path, weights='yolov8s-pose.pt'):
-    from ultralytics import YOLO
-    import numpy as np
+from ultralytics import YOLO
+import numpy as np
 
-    model = YOLO(weights)
+model = YOLO(weights)
+
+def run_pose(video_path, weights='yolov8s-pose.pt'):
     results = model(video_path, stream = True)
 
     xy = []
@@ -23,7 +24,7 @@ def run_pose(video_path, weights='yolov8s-pose.pt'):
         if frame.keypoints.conf is not None:
             con.append(frame.keypoints.conf[person_idx].cpu().numpy().astype(np.float32))
         else:
-            con.append(np.zeros(17,), dtype=np.float32)
+            con.append(np.zeros((17,), dtype=np.float32))
 
     return np.stack(xy), np.stack(con)
 

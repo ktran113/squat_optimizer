@@ -18,6 +18,6 @@ def smooth(xy, conf_valid):
         good = conf_valid & np.isfinite(values)
         bad = ~good
         values[bad] = np.interp(time[bad], time[good], values[good]) 
-        output[:, direction] = np.savgol_filter(values, WINDOW_LENGTH, 2)     #Defaulting to 2 for polynomial possibly change later
+        output[:, direction] = savgol_filter(values, WINDOW_LENGTH, 2)     #Defaulting to 2 for polynomial possibly change later
 
     return output

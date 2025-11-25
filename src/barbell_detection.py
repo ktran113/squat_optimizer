@@ -19,19 +19,22 @@ def run_detection(path, api_key, project_name, version):
 
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    barbell = []
+    xy = []
+    conf = []
 
     print("detecting barbell")
     while True:
         ret, frame = cap.read()
         if not ret:
             break 
-        barbell.append(detect_frame(model, frame))
-    
-    cap.release()
-    print("Done")
+        x, y, c = detect_frame(model, frame)
 
-    return np.array(barbell, dtype=np.float32)
+        xy.append([x,y])
+        conf.append(c)
+    cap.release()
+    print("Done using roboflow workflow to capture barbell")
+
+    return np.array(xy, dtype=np.float32), np.array(conf,dtype= np.float32)
 
 def detect_frame (model, frame):
     """
