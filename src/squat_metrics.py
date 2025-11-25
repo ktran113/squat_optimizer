@@ -87,7 +87,6 @@ def depth_quality(hip, knee, ank, peaks):
     containing whether or not the lifter completed the rep 
     below, parallel, or paritally.
     """
-    DEPTH = 90
     bottom_angles = knee_angle(hip, knee, ank)[peaks]
     quality = []
     for angle in bottom_angles:
@@ -132,6 +131,9 @@ def bar_path_analysis(barbell_xy, start, end):
     bar_x = window[:, 0]
     bar_x = bar_x[~np.isnan(bar_x)]
 
+    if len(bar_x) < 15:
+        return np.nan
+
     horizontal_dev = np.std(bar_x)
     return horizontal_dev
 
@@ -153,12 +155,12 @@ def analyze_squat(xy, conf, barbell_xy, fps=30):
         bar_dev.append(bar_path_analysis(barbell_xy, rep["start"], rep["end"]))
     return {
         "total_reps": len(peaks),   # Returns # of total reps
-        "reps": reps,   #
-        "avg_depth": depth,
-        "knee_angle": knee_ang,
-        "tempo_per_rep": tempo,
-        "hip_heel_alignment": hip_heel_alignment,
-        "bar_path_dev": bar_dev
+        "reps": reps,               #Segmented reps dict
+        "depth_over_time": depth,   #Returns array of ank - hip y coords (lower on screen higher value)
+        "knee_angle": knee_ang,     #Returns knee angle over entire time series
+        "tempo_per_rep": tempo,     #Returns array of tempo of that rep
+        "hip_heel_alignment": hip_heel_alignment,   #Returns time series of hip_heel alignment
+        "bar_path_dev": bar_dev     #Returns time series of deviations of the bar path per rep (float)
     }
 
     
