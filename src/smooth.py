@@ -17,6 +17,8 @@ def smooth(xy, conf_valid):
         #Stores frames of bad / good data
         good = conf_valid & np.isfinite(values)
         bad = ~good
+        if np.sum(good) < 2:
+            return xy
         values[bad] = np.interp(time[bad], time[good], values[good]) 
         output[:, direction] = savgol_filter(values, WINDOW_LENGTH, 2)     #Defaulting to 2 for polynomial possibly change later
 

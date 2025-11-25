@@ -3,9 +3,8 @@
 from ultralytics import YOLO
 import numpy as np
 
-model = YOLO(weights)
-
 def run_pose(video_path, weights='yolov8s-pose.pt'):
+    model = YOLO(weights)
     results = model(video_path, stream = True)
 
     xy = []

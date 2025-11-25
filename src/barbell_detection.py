@@ -16,9 +16,6 @@ def run_detection(path, api_key, project_name, version):
     cap = cv2.VideoCapture(path)
     if not cap.isOpened():
         raise ValueError("Video could not be opened")
-
-    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
     xy = []
     conf = []
 
