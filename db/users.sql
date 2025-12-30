@@ -1,6 +1,9 @@
-CREATE TABLE users{
+CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    email TEXT UNIQUE,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
     name TEXT,
-    created_at TIMESTAMP DEFAULT now()
-};
+    created TIMESTAMP DEFAULT now(),
+    updated TIMESTAMP DEFUALT now()
+);
+CREATE INDEX idx_users_email ON users(email);
