@@ -1,4 +1,4 @@
-CREATE TABLE rep_metrics(
+CREATE TABLE rep_metrics (
     id SERIAL PRIMARY KEY,
     session_id INTEGER REFERENCES sessions(id) on DELETE CASCADE,
     rep_number INTEGER NOT NULL,
