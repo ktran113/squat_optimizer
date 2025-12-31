@@ -12,6 +12,7 @@ from barbell_detection import run_detection
 from detect_pose import run_pose
 from smooth import smooth
 from feedback import generate_feedback
+from database import SessionLocal, Session as DBSession, RepMetric
 
 load_dotenv()
 ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY")
@@ -76,6 +77,12 @@ async def analyze_squat_endpoint(file: UploadFile = File(...), fps: int = 30):
         print("Creating feedback")
         feedback = generate_feedback(metrics)
         metrics["ai_feedback"] = feedback
+
+        #saving to database
+        db = SessionLocal()
+        
+
+
         return metrics #returns as JSON
     
     except Exception as e:
