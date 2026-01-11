@@ -12,16 +12,16 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     name = Column (String, nullable=False)
-    created_at = Column(DateTime, default=datetime)
-    updated_at = Column(DateTime, default=datetime, onupdate=datetime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    sessions = relationship("Sessions", back_populates="user", cascade="all, delete-orphan")
+    sessions = relationship("Session", back_populates="user", cascade="all, delete-orphan")
 
-class Sessions(Base):
-    __tablename__ = "Sessions"
+class Session(Base):
+    __tablename__ = "sessions"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
     video_path =Column(String, nullable=False)
     fps = Column(Integer, default=30)
     total_reps = Column(Integer, nullable=False)
@@ -31,19 +31,20 @@ class Sessions(Base):
     tempo = Column(Float)
     alignment = Column(Float)
     bar_dev = Column(Float)
+    ai_feedback = Column(Text)
 
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime, onupdate=datetime)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    user = relationship("User", back_populates="Sessions")
+    user = relationship("User", back_populates="sessions")
     reps = relationship("RepMetric", back_populates="session", cascade="all, delete-orphan")
 
 
 class RepMetric(Base):
-    __tablename__ = 'reps'
-    
+    __tablename__ = 'rep_metrics'
+
     id = Column(Integer, primary_key=True)
-    session_id = Column(Integer, ForeignKey('Sessions.id', ondelete='CASCADE'))
+    session_id = Column(Integer, ForeignKey('sessions.id', ondelete='CASCADE'))
     rep_number = Column(Integer, nullable=False)
     
     bottom_frame = Column(Integer)
@@ -57,6 +58,6 @@ class RepMetric(Base):
     tempo = Column(Float)
     hip_heel_aligned = Column(Boolean)
     
-    created_at = Column(DateTime, default=datetime)
-    
-    sessions = relationship("Sessions", back_populates="reps")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    session = relationship("Session", back_populates="reps")

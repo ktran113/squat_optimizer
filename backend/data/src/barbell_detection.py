@@ -1,6 +1,8 @@
 import roboflow
 import cv2
 import numpy as np
+import tempfile
+import os
     
 def run_detection(path, api_key, project_name, version):
     """
@@ -19,29 +21,36 @@ def run_detection(path, api_key, project_name, version):
     xy = []
     conf = []
 
-    print("detecting barbell")
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break 
-        x, y, c = detect_frame(model, frame)
+    #create temp file
+    temp_fd, temp_path = tempfile.mkstemp(suffix='.jpg')
+    try:
+        os.close(temp_fd)  #close file descriptor
 
-        xy.append([x,y])
-        conf.append(c)
-    cap.release()
-    print("Done using roboflow workflow to capture barbell")
+        print("detecting barbell")
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            x, y, c = detect_frame(model, frame, temp_path)
 
-    return np.array(xy, dtype=np.float32), np.array(conf,dtype= np.float32)
+            xy.append([x,y])
+            conf.append(c)
+        cap.release()
+        print("Done capturing barbell")
+        return np.array(xy, dtype=np.float32), np.array(conf,dtype= np.float32)
+    finally:
+        #cleaning up temp file
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
 
-def detect_frame (model, frame):
+def detect_frame(model, frame, temp_path):
     """
     Analyzes individual frame and returns tuple consisting
-    of that frames x,y cordinates and their confidence rating
+    of that frames x,y coordinates and their confidence rating
     """
-    path = "temp.jpg"
-    cv2.imwrite(path, frame)
+    cv2.imwrite(temp_path, frame)
 
-    prediction = model.predict(path, confidence=50).json()
+    prediction = model.predict(temp_path, confidence=50).json()
 
     if prediction['predictions']:
         best = max(prediction["predictions"], key=lambda x: x["confidence"])

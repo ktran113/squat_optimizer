@@ -1,2 +1,10 @@
-.venv/
-.env
+  .claude/
+  .env
+  __pycache__/
+  *.pyc
+  venv/
+  *.egg-info/
+  *.db
+  .vscode/
+  .idea/
+  .DS_Store

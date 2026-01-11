@@ -1,7 +1,17 @@
 import numpy as np
 from scipy.signal import find_peaks
 
+#Keypoint indices for COCO pose format
 COCO = dict(L_hip=11, R_hip=12, L_knee=13, R_knee=14,L_ank=15, R_ank=16)
+
+EPSILON = 1e-6  #small value to prevent division by zero
+MIN_DEPTH_THRESHOLD = 0  #min depth threshold for rep detection
+MIN_DISTANCE_BETWEEN_REPS = 30  #min frames between rep peaks
+ANGLE_BELOW_PARALLEL = 90  #knee angle threshold for "below parallel" (degrees)
+ANGLE_PARALLEL = 100  #knee angle threshold for "parallel" (degrees)
+DEFAULT_REP_WINDOW = 15  #default frame window around rep peak
+MIN_FRAMES_BAR_PATH = 15  # minimum frames needed for bar path analysis
+HIP_HEEL_ERROR_THRESHOLD = 50  #pixel threshold for hip-heel alignment
 
 def sideSelector(xy, con):
     """
@@ -34,7 +44,7 @@ def angle(A, B, C): #cos(theta) = (v1 dot v2) / mag(v1) * mag(v2)
     mag_v1 = np.linalg.norm(v1, axis=1)
     mag_v2 = np.linalg.norm(v2, axis=1)
 
-    cos = dot / (mag_v1 * mag_v2 + 1e-6)
+    cos = dot / (mag_v1 * mag_v2 + EPSILON)
     cos = np.clip(cos, -1.0, 1.0)
     return np.degrees(np.arccos(cos))
 
@@ -64,12 +74,8 @@ def rep_count(hip, knee):
     Returns numpy array of bottom frames
     Length of array gives you # of reps
     """
-    #Values below are error bounds for depth percision
-    MIN_DEPTH_THRESHHOLD = 0
-    MIN_DISTANCE = 30
-
     depth_over_time = squat_depths(hip, knee)
-    peaks, _ = find_peaks(depth_over_time, height=MIN_DEPTH_THRESHHOLD, distance=MIN_DISTANCE)
+    peaks, _ = find_peaks(depth_over_time, height=MIN_DEPTH_THRESHOLD, distance=MIN_DISTANCE_BETWEEN_REPS)
     return peaks
     #depth_over_time[peaks] >= error
 
@@ -90,15 +96,15 @@ def depth_quality(hip, knee, ank, peaks):
     bottom_angles = knee_angle(hip, knee, ank)[peaks]
     quality = []
     for angle in bottom_angles:
-        if angle < 90:
+        if angle < ANGLE_BELOW_PARALLEL:
             quality.append("below")
-        elif angle < 100:
+        elif angle < ANGLE_PARALLEL:
             quality.append("parallel")
         else:
             quality.append("partial")
     return quality
 
-def segment_reps(hip, knee, ank, peaks, window=15):
+def segment_reps(hip, knee, ank, peaks, window=DEFAULT_REP_WINDOW):
     """
     Returns a dictionary containing information per rep, 
     information contains windows, rep count, bottom frame
@@ -131,7 +137,7 @@ def bar_path_analysis(barbell_xy, start, end):
     bar_x = window[:, 0]
     bar_x = bar_x[~np.isnan(bar_x)]
 
-    if len(bar_x) < 15:
+    if len(bar_x) < MIN_FRAMES_BAR_PATH:
         return np.nan
 
     horizontal_dev = np.std(bar_x)
@@ -147,7 +153,7 @@ def analyze_squat(xy, conf, barbell_xy, fps=30):
     reps = segment_reps(hip, knee, ank, peaks)
     knee_ang = knee_angle(hip, knee, ank)
     depth = squat_depths(hip,knee)
-    hip_heel_alignment = hip_heel(hip, ank, error=50) #50 pixel window of error
+    hip_heel_alignment = hip_heel(hip, ank, error=HIP_HEEL_ERROR_THRESHOLD)
     tempo = rep_tempo(peaks, fps)
     bar_dev = []
 

@@ -11,9 +11,8 @@ CREATE TABLE sessions(
     alignment FLOAT,
     bar_dev FLOAT,
 
-    date TIMESTAMP DEFAULT NOW()
     created_at TIMESTAMP DEFAULT now()
 );
 
 CREATE INDEX idx_sessions_user_id ON sessions(user_id);
-CREATE INDEX idx_sessions_workout_date ON sessions(workout_date);
+CREATE INDEX idx_sessions_created_at ON sessions(created_at);
