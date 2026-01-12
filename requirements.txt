@@ -1,0 +1,28 @@
+# Web framework
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Data processing
+numpy
+scipy
+
+# Computer vision & ML
+ultralytics
+opencv-python
+roboflow
+
+# Database
+sqlalchemy
+
+# Authentication
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt
+
+# Environment & utilities
+python-dotenv
+pydantic
+
+# AI feedback
+openai
