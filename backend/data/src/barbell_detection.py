@@ -4,7 +4,7 @@ import numpy as np
 import tempfile
 import os
     
-def run_detection(path, api_key, project_name, version):
+def run_detection(path, api_key, project_name, version, workspace=None):
     """
     Takes care of loading the model and returns the results as
     a tuple per frame of x,y coordinates and the confidence rating
@@ -12,7 +12,10 @@ def run_detection(path, api_key, project_name, version):
     """
     print("loading model")
     rf = roboflow.Roboflow(api_key= api_key)
-    project = rf.workspace().project(project_name)
+    if workspace:
+        project = rf.workspace(workspace).project(project_name)
+    else:
+        project = rf.workspace().project(project_name)
     model = project.version(version).model
 
     cap = cv2.VideoCapture(path)
