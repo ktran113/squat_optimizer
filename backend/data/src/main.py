@@ -21,6 +21,7 @@ load_dotenv()
 ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY")
 ROBOFLOW_PROJECT = os.getenv("ROBOFLOW_PROJECT")
 ROBOFLOW_VERSION = os.getenv("ROBOFLOW_VERSION")
+ROBOFLOW_WORKSPACE = os.getenv("ROBOFLOW_WORKSPACE")
 app = FastAPI(
     title = "Squat Form Analysis",
     version = "0.1.0"
@@ -329,7 +330,7 @@ async def analyze_squat_endpoint(file: UploadFile = File(...), fps: int = 30, cu
     try:
         #getting keypoints
         print("Running barbell detection")
-        raw_barbell_xy, barbell_conf = run_detection(tmp_path, ROBOFLOW_API_KEY, ROBOFLOW_PROJECT, ROBOFLOW_VERSION)
+        raw_barbell_xy, barbell_conf = run_detection(tmp_path, ROBOFLOW_API_KEY, ROBOFLOW_PROJECT, ROBOFLOW_VERSION, ROBOFLOW_WORKSPACE)
 
         # Takes only the keypoints we need which are the left and right
         # hips, knees, and ankles.
