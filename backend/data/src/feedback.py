@@ -58,7 +58,7 @@ def generate_feedback(metrics):
             model = "gpt-4o-mini", messages = [{"role": "user", "content" : prompt}], max_tokens=300, temperature=0.7)
         return response.choices[0].message.content
     except RateLimitError:
-        return "Fameedback unavailable: Rate limit exceeded. Please try again later."
+        return "Feedback unavailable: Rate limit exceeded. Please try again later."
     except APIConnectionError:
         return "Feedback unavailable: Could not connect to OpenAI API."
     except APIError as e:
