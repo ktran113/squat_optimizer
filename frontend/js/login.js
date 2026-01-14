@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000';
+const API_URL = "https://squat-optimizer-ken.duckdns.org";
 
 const form = document.getElementById('register-form');
 const errorDiv = document.getElementById('error-message');
