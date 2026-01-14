@@ -7,6 +7,22 @@ import tempfile
 import shutil
 from pydantic import BaseModel
 from dotenv import load_dotenv
+
+def convert_numpy(obj):
+    """Convert numpy types to Python native types for JSON serialization"""
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, (np.integer,)):
+        return int(obj)
+    elif isinstance(obj, (np.floating,)):
+        return float(obj)
+    elif isinstance(obj, (np.bool_,)):
+        return bool(obj)
+    elif isinstance(obj, dict):
+        return {k: convert_numpy(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy(i) for i in obj]
+    return obj
 from squat_metrics import analyze_squat
 from barbell_detection import run_detection
 from detect_pose import run_pose
@@ -410,7 +426,7 @@ async def analyze_squat_endpoint(file: UploadFile = File(...), fps: int = 30, cu
         finally:
             db.close()
 
-        return metrics #returns as JSON
+        return convert_numpy(metrics)  # Convert numpy types for JSON serialization
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error during analysis: {str(e)}")
