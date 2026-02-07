@@ -7,6 +7,7 @@ COCO = dict(L_hip=11, R_hip=12, L_knee=13, R_knee=14,L_ank=15, R_ank=16)
 EPSILON = 1e-6  #small value to prevent division by zero
 MIN_DEPTH_THRESHOLD = 0  #min depth threshold for rep detection
 MIN_DISTANCE_BETWEEN_REPS = 30  #min frames between rep peaks
+MIN_REP_PROMINENCE = 30  #min prominence to filter out noise/shakiness (pixels)
 ANGLE_BELOW_PARALLEL = 90  #knee angle threshold for "below parallel" (degrees)
 ANGLE_PARALLEL = 100  #knee angle threshold for "parallel" (degrees)
 DEFAULT_REP_WINDOW = 15  #default frame window around rep peak
@@ -69,13 +70,18 @@ def hip_heel(hip, ank, error):
     result = np.where(np.abs(lineup) <= error, True, False)        
     return result
 
-def rep_count(hip, knee): 
+def rep_count(hip, knee):
     """
     Returns numpy array of bottom frames
     Length of array gives you # of reps
     """
     depth_over_time = squat_depths(hip, knee)
-    peaks, _ = find_peaks(depth_over_time, height=MIN_DEPTH_THRESHOLD, distance=MIN_DISTANCE_BETWEEN_REPS)
+    peaks, _ = find_peaks(
+        depth_over_time,
+        height=MIN_DEPTH_THRESHOLD,
+        distance=MIN_DISTANCE_BETWEEN_REPS,
+        prominence=MIN_REP_PROMINENCE  #filters out noise/shakiness
+    )
     return peaks
     #depth_over_time[peaks] >= error
 
