@@ -57,7 +57,7 @@ app = FastAPI(
 )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://squat-optimizer-frontend.vercel.app"],
+    allow_origins=["https://squat-optimizer-frontend.vercel.app", "https://squat-optimizer.duckdns.org"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
