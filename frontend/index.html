@@ -5,29 +5,149 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Squat Optimizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body>
-    <div class="container">
-        <header class="header">
-            <h1>Squat Form Analyzer</h1>
-            <p class="tagline">Squat form analysis designed to perfect your technique</p>
-        </header>
-        <main class="main-content">
-            <div class="hero-section">
-                <h2>Improve Your Squat Form</h2>
-                <p>Upload a video of your squats and get instant feedback on your form and technique.</p>
-                <div class="cta-buttons">
-                    <a href="login.html" class="btn btn-primary">Login</a>
-                    <a href="register.html" class="btn btn-secondary">Sign Up</a>
+    <div class="noise-overlay"></div>
+
+    <nav class="nav">
+        <div class="nav-logo">SQUAT<span class="accent">OPT</span></div>
+        <div class="nav-links">
+            <a href="login.html" class="nav-link">Log in</a>
+            <a href="register.html" class="btn btn-accent">Get Started</a>
+        </div>
+    </nav>
+
+    <main class="hero">
+        <div class="hero-badge" style="animation-delay: 0.1s">COMPUTER VISION POWERED</div>
+        <h1 class="hero-title" style="animation-delay: 0.2s">
+            Analyze Your<br>
+            <span class="hero-title-accent">Squat Form</span>
+        </h1>
+        <p class="hero-sub" style="animation-delay: 0.35s">
+            Upload a video. Get rep counts, depth analysis, bar path tracking,
+            and AI coaching feedback in seconds.
+        </p>
+        <div class="hero-cta" style="animation-delay: 0.5s">
+            <a href="register.html" class="btn btn-accent btn-lg">Start Analyzing</a>
+            <a href="#features" class="btn btn-ghost btn-lg">See How It Works</a>
+        </div>
+
+        <div class="hero-stats" style="animation-delay: 0.65s">
+            <div class="stat">
+                <span class="stat-num">17</span>
+                <span class="stat-label">Body Keypoints</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat">
+                <span class="stat-num">6</span>
+                <span class="stat-label">Metrics Per Rep</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat">
+                <span class="stat-num">AI</span>
+                <span class="stat-label">Coaching Feedback</span>
+            </div>
+        </div>
+    </main>
+
+    <section id="features" class="features">
+        <div class="features-header">
+            <span class="section-tag">CAPABILITIES</span>
+            <h2 class="section-title">What Gets Measured</h2>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card" style="animation-delay: 0.1s">
+                <div class="feature-icon-wrap">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/>
+                    </svg>
+                </div>
+                <h3>Rep Detection</h3>
+                <p>Automatic rep counting using signal processing with prominence-based peak detection to filter noise.</p>
+            </div>
+
+            <div class="feature-card" style="animation-delay: 0.2s">
+                <div class="feature-icon-wrap">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <h3>Depth Analysis</h3>
+                <p>Classifies each rep as below parallel, parallel, or partial based on knee angle geometry.</p>
+            </div>
+
+            <div class="feature-card" style="animation-delay: 0.3s">
+                <div class="feature-icon-wrap">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <line x1="12" y1="2" x2="12" y2="22"/><polyline points="17 7 12 2 7 7"/><line x1="4" y1="12" x2="20" y2="12"/>
+                    </svg>
+                </div>
+                <h3>Bar Path Tracking</h3>
+                <p>Roboflow-powered barbell detection measures horizontal deviation throughout each rep.</p>
+            </div>
+
+            <div class="feature-card" style="animation-delay: 0.4s">
+                <div class="feature-icon-wrap">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                </div>
+                <h3>AI Coaching</h3>
+                <p>GPT-4 generates personalized feedback based on your specific metrics and form patterns.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="how-it-works">
+        <div class="features-header">
+            <span class="section-tag">PIPELINE</span>
+            <h2 class="section-title">How It Works</h2>
+        </div>
+
+        <div class="pipeline">
+            <div class="pipeline-step">
+                <div class="step-num">01</div>
+                <div class="step-content">
+                    <h3>Upload Video</h3>
+                    <p>Drop your squat video in MP4, AVI, MOV, or MKV format</p>
                 </div>
             </div>
-        </main>
-        <footer class="footer">
-            <p>By Ken Tran @UMD</p>
-        </footer>
-    </div>
+            <div class="pipeline-connector"></div>
+            <div class="pipeline-step">
+                <div class="step-num">02</div>
+                <div class="step-content">
+                    <h3>Pose Estimation</h3>
+                    <p>YOLOv8 extracts 17 body keypoints from every frame</p>
+                </div>
+            </div>
+            <div class="pipeline-connector"></div>
+            <div class="pipeline-step">
+                <div class="step-num">03</div>
+                <div class="step-content">
+                    <h3>Signal Processing</h3>
+                    <p>Savitzky-Golay filter smooths data while preserving peaks</p>
+                </div>
+            </div>
+            <div class="pipeline-connector"></div>
+            <div class="pipeline-step">
+                <div class="step-num">04</div>
+                <div class="step-content">
+                    <h3>Results + Feedback</h3>
+                    <p>Metrics computed per-rep with AI coaching feedback</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>Built by Ken Tran @ UMD</p>
+    </footer>
 </body>
 
 </html>

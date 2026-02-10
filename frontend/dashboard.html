@@ -5,89 +5,116 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Squat Optimizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/dashboard.css">
 </head>
 
 <body>
-    <div class="dashboard-container">
-        <header class="dashboard-header">
-            <h1>Squat Optimizer</h1>
-            <div class="user-info">
-                <span id="user-name">Welcome</span>
-                <button id="logout-btn" class="btn btn-secondary">Logout</button>
-            </div>
-        </header>
+    <div class="noise-overlay"></div>
 
-        <main class="dashboard-main">
-            <section class="upload-section">
-                <h2>Analyze Your Squat</h2>
-                <div class="upload-area" id="upload-area">
-                    <div class="upload-content">
-                        <p>Drag and drop your video here</p>
-                        <p>or</p>
-                        <label for="video-input" class="btn btn-primary">Choose File</label>
-                        <input type="file" id="video-input" accept=".mp4,.avi,.mov,.mkv" hidden>
-                    </div>
-                    <p id="file-name" class="file-name"></p>
+    <header class="dash-header">
+        <div class="dash-header-left">
+            <a href="index.html" class="nav-logo">SQUAT<span class="accent">OPT</span></a>
+        </div>
+        <div class="dash-header-right">
+            <span id="user-name" class="user-greeting">Welcome</span>
+            <button id="logout-btn" class="btn btn-secondary btn-sm">Logout</button>
+        </div>
+    </header>
+
+    <main class="dash-main">
+        <!-- UPLOAD SECTION -->
+        <section class="card upload-card">
+            <h2 class="card-title">Analyze Your Squat</h2>
+
+            <div class="upload-area" id="upload-area">
+                <div class="upload-content" id="upload-content">
+                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <p class="upload-label">Drag and drop your video here</p>
+                    <p class="upload-or">or</p>
+                    <label for="video-input" class="btn btn-accent btn-sm">Choose File</label>
+                    <input type="file" id="video-input" accept=".mp4,.avi,.mov,.mkv" hidden>
                 </div>
+                <p id="file-name" class="file-name"></p>
+            </div>
 
+            <!-- VIDEO PREVIEW (shows after file select & during analysis) -->
+            <div id="video-preview-wrap" class="video-preview-wrap" style="display: none;">
+                <video id="video-preview" class="video-preview" muted loop playsinline></video>
+                <div id="video-scan-overlay" class="video-scan-overlay" style="display: none;">
+                    <div class="scan-line"></div>
+                    <div class="scan-info">
+                        <div class="scan-spinner"></div>
+                        <span>Analyzing your squat...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="upload-controls">
                 <div class="fps-input">
-                    <label for="fps">Video FPS:</label>
+                    <label for="fps">FPS</label>
                     <input type="number" id="fps" value="30" min="1" max="240">
                 </div>
+                <button id="analyze-btn" class="btn btn-accent" disabled>Analyze Video</button>
+            </div>
 
-                <button id="analyze-btn" class="btn btn-primary" disabled>Analyze Video</button>
+            <div id="error-message" class="error-message" style="display: none;"></div>
+        </section>
 
-                <div id="analysis-loading" class="loading" style="display: none;">
-                    <div class="spinner"></div>
-                    <p>Analyzing your squat... This may take a minute.</p>
+        <!-- RESULTS SECTION -->
+        <section id="results-section" class="card results-card" style="display: none;">
+            <h2 class="card-title">Analysis Results</h2>
+
+            <div class="metrics-grid">
+                <div class="metric-tile">
+                    <span class="metric-label">Total Reps</span>
+                    <span id="total-reps" class="metric-value">-</span>
                 </div>
-
-                <div id="error-message" class="error-message" style="display: none;"></div>
-            </section>
-
-            <section id="results-section" class="results-section" style="display: none;">
-                <h2>Analysis Results</h2>
-
-                <div class="results-grid">
-                    <div class="result-card">
-                        <h3>Total Reps</h3>
-                        <p id="total-reps" class="result-value">-</p>
-                    </div>
-                    <div class="result-card">
-                        <h3>Min Knee Angle</h3>
-                        <p id="min-angle" class="result-value">-</p>
-                    </div>
-                    <div class="result-card">
-                        <h3>Avg Tempo</h3>
-                        <p id="avg-tempo" class="result-value">-</p>
-                    </div>
-                    <div class="result-card">
-                        <h3>Bar Path Deviation</h3>
-                        <p id="bar-dev" class="result-value">-</p>
-                    </div>
+                <div class="metric-tile">
+                    <span class="metric-label">Min Knee Angle</span>
+                    <span id="min-angle" class="metric-value">-</span>
                 </div>
+                <div class="metric-tile">
+                    <span class="metric-label">Avg Tempo</span>
+                    <span id="avg-tempo" class="metric-value">-</span>
+                </div>
+                <div class="metric-tile">
+                    <span class="metric-label">Bar Path Dev</span>
+                    <span id="bar-dev" class="metric-value">-</span>
+                </div>
+            </div>
 
-                <div class="feedback-section">
+            <div class="feedback-box">
+                <div class="feedback-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
                     <h3>AI Coaching Feedback</h3>
-                    <p id="ai-feedback" class="feedback-text">-</p>
                 </div>
+                <p id="ai-feedback" class="feedback-text">-</p>
+            </div>
 
-                <div class="reps-breakdown">
-                    <h3>Rep Breakdown</h3>
-                    <div id="reps-list" class="reps-list"></div>
-                </div>
-            </section>
+            <div class="reps-section">
+                <h3 class="reps-title">Rep Breakdown</h3>
+                <div id="reps-list" class="reps-grid"></div>
+            </div>
+        </section>
 
-            <section class="history-section">
-                <h2>Workout History</h2>
-                <div id="sessions-list" class="sessions-list">
-                    <p class="loading-text">Loading sessions...</p>
-                </div>
-            </section>
-        </main>
-    </div>
+        <!-- HISTORY SECTION -->
+        <section class="card history-card">
+            <h2 class="card-title">Workout History</h2>
+            <div id="sessions-list" class="sessions-list">
+                <p class="empty-state">Loading sessions...</p>
+            </div>
+        </section>
+    </main>
 
     <script src="js/dashboard.js"></script>
 </body>

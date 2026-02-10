@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from typing import List, Optional
 import numpy as np
@@ -7,9 +8,18 @@ import tempfile
 import shutil
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from squat_metrics import analyze_squat
+from barbell_detection import run_detection
+from detect_pose import run_pose
+from smooth import smooth
+from feedback import generate_feedback
+from database import SessionLocal, init_db
+from models import Session, RepMetric, User
+from auth import hash_password, verify_password, create_access_token, get_current_user_id
+from fastapi import Depends
 
 def convert_numpy(obj):
-    """Convert numpy types to Python native types for JSON serialization"""
+    #converts numpy types to norm python types
     if isinstance(obj, np.ndarray):
         return obj.tolist()
     elif isinstance(obj, (np.integer,)):
@@ -23,24 +33,27 @@ def convert_numpy(obj):
     elif isinstance(obj, list):
         return [convert_numpy(i) for i in obj]
     return obj
-from squat_metrics import analyze_squat
-from barbell_detection import run_detection
-from detect_pose import run_pose
-from smooth import smooth
-from feedback import generate_feedback
-from database import SessionLocal, init_db
-from models import Session, RepMetric, User
-from auth import hash_password, verify_password, create_access_token, get_current_user_id
-from fastapi import Depends
 
 load_dotenv()
 ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY")
 ROBOFLOW_PROJECT = os.getenv("ROBOFLOW_PROJECT")
 ROBOFLOW_VERSION = os.getenv("ROBOFLOW_VERSION")
 ROBOFLOW_WORKSPACE = os.getenv("ROBOFLOW_WORKSPACE")
+
+# locally trained barbell detection weights
+BARBELL_WEIGHTS_PATH = os.path.join(os.path.dirname(__file__), "..", "models", "barbell", "weights", "best.pt")
+
+#initalize dbs on startup
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    print("database initialized")
+    yield
+
 app = FastAPI(
     title = "Squat Form Analysis",
-    version = "0.1.0"
+    version = "0.1.0",
+    lifespan = lifespan
 )
 app.add_middleware(
     CORSMiddleware,
@@ -49,12 +62,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-#initalize dbs on startup
-@app.on_event("startup")
-def startup_db():
-    init_db()
-    print("Database initialized!")
 
 #response models
 class RepMetricResponse(BaseModel):
@@ -346,7 +353,7 @@ async def analyze_squat_endpoint(file: UploadFile = File(...), fps: int = 30, cu
     try:
         #getting keypoints
         print("Running barbell detection")
-        raw_barbell_xy, barbell_conf = run_detection(tmp_path, ROBOFLOW_API_KEY, ROBOFLOW_PROJECT, ROBOFLOW_VERSION, ROBOFLOW_WORKSPACE)
+        raw_barbell_xy, barbell_conf = run_detection(tmp_path, BARBELL_WEIGHTS_PATH)
 
         # Takes only the keypoints we need which are the left and right
         # hips, knees, and ankles.
@@ -355,7 +362,7 @@ async def analyze_squat_endpoint(file: UploadFile = File(...), fps: int = 30, cu
         raw_xy, conf = run_pose(tmp_path)
         xy = raw_xy.copy()
         
-        #Running savgol filter
+        #savgol filter
         for joints in REQUIRED_KEYPOINTS:
             conf_valid = conf[:, joints] > 0.5      #smooth() expects boloean array
             xy[: , joints, : ] = smooth(raw_xy[:, joints, :], conf_valid)
@@ -373,7 +380,7 @@ async def analyze_squat_endpoint(file: UploadFile = File(...), fps: int = 30, cu
         #saving to database
         db = SessionLocal()
         try:
-            # Calculate summary statistics
+            #calculate summary stats
             avg_depth = np.mean([rep.get('bottom_angle', 0) for rep in metrics['reps']])
             min_knee_angle = min([rep.get('bottom_angle', 180) for rep in metrics['reps']])
             avg_tempo = np.mean(metrics['tempo_per_rep']) if len(metrics['tempo_per_rep']) > 0 else None
@@ -426,7 +433,7 @@ async def analyze_squat_endpoint(file: UploadFile = File(...), fps: int = 30, cu
         finally:
             db.close()
 
-        return convert_numpy(metrics)  # Convert numpy types for JSON serialization
+        return convert_numpy(metrics)  #convert numpy types
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error during analysis: {str(e)}")

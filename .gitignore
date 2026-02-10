@@ -9,3 +9,10 @@
   .idea/
   .DS_Store
   pem/
+  backend/data/models/barbell_dataset/
+  backend/data/models/barbell/*.png
+  backend/data/models/barbell/*.jpg
+  backend/data/models/barbell/*.csv
+  backend/data/models/barbell/weights/last.pt
+  .venv/
+  yolov8n.pt
