@@ -1,18 +1,21 @@
-  .claude/
-  .env
-  __pycache__/
-  *.pyc
-  venv/
-  *.egg-info/
-  *.db
-  .vscode/
-  .idea/
-  .DS_Store
-  pem/
-  backend/data/models/barbell_dataset/
-  backend/data/models/barbell/*.png
-  backend/data/models/barbell/*.jpg
-  backend/data/models/barbell/*.csv
-  backend/data/models/barbell/weights/last.pt
-  .venv/
-  yolov8n.pt
+.claude/
+.env
+__pycache__/
+*.pyc
+venv/
+*.egg-info/
+*.db
+.vscode/
+.idea/
+.DS_Store
+pem/
+*.pem
+backend/data/models/barbell_dataset/
+backend/data/models/barbell/*.png
+backend/data/models/barbell/*.jpg
+backend/data/models/barbell/*.csv
+backend/data/models/barbell/weights/last.pt
+.venv/
+yolov8n.pt
+eval/videos/
+eval/cache/

@@ -1,4 +1,4 @@
-const API_URL = "https://squat-optimizer-ken.duckdns.org";
+const API_URL = "https://squat-optimizer.duckdns.org";
 
 const form = document.getElementById('register-form');
 const errorDiv = document.getElementById('error-message');
@@ -77,7 +77,7 @@ form.addEventListener('submit', async function(event) {
 
     } catch (error) {
         console.error('Error:', error);
-        showError('Cannot connect to server. Make sure backend is running!');
+        showError('Cannot connect to server.');
         hideLoading();
     }
 });

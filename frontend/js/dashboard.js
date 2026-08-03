@@ -113,7 +113,7 @@ analyzeBtn.addEventListener('click', async function() {
 
         if (response.ok) {
             displayResults(data);
-            loadSessions(); // Refresh session history
+            loadSessions(); // refresh session history
         } else {
             showError(data.detail || 'Analysis failed. Please try again.');
         }
@@ -130,7 +130,7 @@ analyzeBtn.addEventListener('click', async function() {
 function displayResults(data) {
     resultsSection.style.display = 'block';
 
-    // Summary stats
+    //summary
     document.getElementById('total-reps').textContent = data.total_reps || '-';
 
     const minAngle = data.reps && data.reps.length > 0
@@ -244,7 +244,7 @@ async function viewSession(sessionId) {
 
         if (response.ok) {
             const session = response.json();
-            // Could expand to show full session details in a modal
+            //possibly expand session detals in a modal
             console.log('Session details:', session);
         }
     } catch (error) {
