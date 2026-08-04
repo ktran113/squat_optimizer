@@ -70,7 +70,7 @@ def load_labels(path):
     return rows
 
 
-def pipeline_arrays(video_path, cache_dir, use_cache):
+def pipeline_arrays(video_path, cache_dir, use_cache, fps):
     """runs pose + detection + smoothing, caching the result per video"""
     cache_file = cache_dir / f"{video_path.stem}.npz" if cache_dir else None
 
@@ -83,8 +83,8 @@ def pipeline_arrays(video_path, cache_dir, use_cache):
 
     xy = raw_xy.copy()
     for joint in REQUIRED_KEYPOINTS:
-        xy[:, joint, :] = smooth(raw_xy[:, joint, :], conf[:, joint] > CONF_THRESHOLD)
-    barbell_xy = smooth(raw_barbell_xy, barbell_conf > CONF_THRESHOLD)
+        xy[:, joint, :] = smooth(raw_xy[:, joint, :], conf[:, joint] > CONF_THRESHOLD, fps)
+    barbell_xy = smooth(raw_barbell_xy, barbell_conf > CONF_THRESHOLD, fps)
 
     if cache_file:
         cache_dir.mkdir(parents=True, exist_ok=True)
@@ -223,7 +223,8 @@ def main():
             continue
 
         print(f"[{i}/{len(labels)}] {label['video']}")
-        xy, conf, barbell_xy = pipeline_arrays(video_path, cache_dir, not args.no_cache)
+        fps = args.fps or video_fps(video_path)
+        xy, conf, barbell_xy = pipeline_arrays(video_path, cache_dir, not args.no_cache, fps)
 
         if args.calibrate:
             calibration.append({
@@ -241,7 +242,7 @@ def main():
             print(f"    EXCLUDED: {reason}")
             continue
 
-        metrics = analyze_squat(xy, conf, barbell_xy, args.fps or video_fps(video_path))
+        metrics = analyze_squat(xy, conf, barbell_xy, fps)
 
         results.append({
             **label,

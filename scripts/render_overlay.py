@@ -60,7 +60,7 @@ def analyzed_side(conf):
     return left if np.mean(conf[:, left]) > np.mean(conf[:, right]) else right
 
 
-def run_pipeline(video_path):
+def run_pipeline(video_path, fps):
     """runs the same steps as the analyze-video endpoint"""
     print("Running barbell detection")
     raw_barbell_xy, barbell_conf = run_detection(video_path, str(BARBELL_WEIGHTS))
@@ -71,10 +71,10 @@ def run_pipeline(video_path):
 
     for joint in REQUIRED_KEYPOINTS:
         conf_valid = conf[:, joint] > CONF_THRESHOLD
-        xy[:, joint, :] = smooth(raw_xy[:, joint, :], conf_valid)
+        xy[:, joint, :] = smooth(raw_xy[:, joint, :], conf_valid, fps)
 
     barbell_valid = barbell_conf > CONF_THRESHOLD
-    barbell_xy = smooth(raw_barbell_xy, barbell_valid)
+    barbell_xy = smooth(raw_barbell_xy, barbell_valid, fps)
 
     return xy, conf, barbell_xy
 
@@ -323,13 +323,13 @@ def main():
     if not BARBELL_WEIGHTS.exists():
         raise SystemExit(f"barbell weights not found at {BARBELL_WEIGHTS}")
 
-    xy, conf, barbell_xy = run_pipeline(args.video)
-
     cap = cv2.VideoCapture(args.video)
-    fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+    src_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     cap.release()
+    fps = int(round(src_fps))
 
-    metrics = analyze_squat(xy, conf, barbell_xy, int(round(fps)))
+    xy, conf, barbell_xy = run_pipeline(args.video, fps)
+    metrics = analyze_squat(xy, conf, barbell_xy, fps)
     print(f"\ndetected {metrics['total_reps']} reps: "
           f"{', '.join(r['depth'] for r in metrics['reps']) or 'none'}")
 

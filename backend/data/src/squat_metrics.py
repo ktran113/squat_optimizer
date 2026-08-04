@@ -5,14 +5,17 @@ from scipy.signal import find_peaks
 COCO = dict(L_hip=11, R_hip=12, L_knee=13, R_knee=14,L_ank=15, R_ank=16)
 
 EPSILON = 1e-6  #small value to prevent division by zero
-MIN_DEPTH_THRESHOLD = 0  #min depth threshold for rep detection
-MIN_DISTANCE_BETWEEN_REPS = 60  #min frames between rep peaks (~2s at 30fps)
+DEFAULT_FPS = 30
+MIN_SECONDS_BETWEEN_REPS = 2.0  #min time between rep bottoms
 MIN_REP_PROMINENCE = 80  #min prominence to filter out noise/shakiness (pixels)
 ANGLE_BELOW_PARALLEL = 90  #knee angle threshold for "below parallel" (degrees)
 ANGLE_PARALLEL = 100  #knee angle threshold for "parallel" (degrees)
-DEFAULT_REP_WINDOW = 15  #default frame window around rep peak
-MIN_FRAMES_BAR_PATH = 15  # minimum frames needed for bar path analysis
+REP_WINDOW_SECONDS = 0.5  #window either side of the rep bottom
+MIN_BAR_PATH_SECONDS = 0.5  #minimum usable time needed for bar path analysis
 HIP_HEEL_ERROR_THRESHOLD = 50  #pixel threshold for hip-heel alignment
+
+def seconds_to_frames(seconds, fps):
+    return max(1, int(round(seconds * (fps or DEFAULT_FPS))))
 
 def sideSelector(xy, con):
     """
@@ -70,20 +73,42 @@ def hip_heel(hip, ank, error):
     result = np.where(np.abs(lineup) <= error, True, False)        
     return result
 
-def rep_count(hip, knee):
+def rep_signal(depth_over_time):
+    """
+    knee - hip shrinks as the lifter descends, so rep bottoms are minima and the
+    signal is negated to find them as peaks.
+
+    A rep clipped by the start or end of the video keeps only one flank, which
+    halves its prominence and hides it. Padding both ends with the standing
+    baseline lets such a rep be judged on the flank that is actually visible.
+    Index i of the result corresponds to frame i - 1.
+    """
+    signal = -np.asarray(depth_over_time, dtype=float)
+    if len(signal) == 0:
+        return signal
+    baseline = signal.min()
+    return np.concatenate(([baseline], signal, [baseline]))
+
+def rep_count(hip, knee, fps=DEFAULT_FPS):
     """
     Returns numpy array of bottom frames
     Length of array gives you # of reps
     """
-    depth_over_time = squat_depths(hip, knee)
+    signal = rep_signal(squat_depths(hip, knee))
+    if len(signal) == 0:
+        return np.array([], dtype=int)
     peaks, _ = find_peaks(
-        depth_over_time,
-        height=MIN_DEPTH_THRESHOLD,
-        distance=MIN_DISTANCE_BETWEEN_REPS,
+        signal,
+        distance=seconds_to_frames(MIN_SECONDS_BETWEEN_REPS, fps),
         prominence=MIN_REP_PROMINENCE  #filters out noise/shakiness
     )
-    return peaks
-    #depth_over_time[peaks] >= error
+    peaks = peaks - 1  #undo the pad offset
+
+    #the padding is there to score bottoms near the edges fairly, not to invent
+    #one at the very first or last frame. A video that cuts off mid-descent
+    #never shows the lifter reaching a bottom, so that is not a rep.
+    last_frame = len(signal) - 3  #len(signal) is the original length plus 2 pads
+    return peaks[(peaks > 0) & (peaks < last_frame)]
 
 def rep_tempo(rep_bottom_frames, fps = 30):
     """
@@ -110,12 +135,13 @@ def depth_quality(hip, knee, ank, peaks):
             quality.append("partial")
     return quality
 
-def segment_reps(hip, knee, ank, peaks, window=DEFAULT_REP_WINDOW):
+def segment_reps(hip, knee, ank, peaks, fps=DEFAULT_FPS):
     """
-    Returns a dictionary containing information per rep, 
+    Returns a dictionary containing information per rep,
     information contains windows, rep count, bottom frame
     depth, and the angle at the bottom
     """
+    window = seconds_to_frames(REP_WINDOW_SECONDS, fps)
     reps = []
     depth = depth_quality(hip, knee, ank, peaks)
     for i, peak in enumerate(peaks):
@@ -133,17 +159,17 @@ def segment_reps(hip, knee, ank, peaks, window=DEFAULT_REP_WINDOW):
         reps.append(rep_stats)
     return reps
 
-def bar_path_analysis(barbell_xy, start, end):
+def bar_path_analysis(barbell_xy, start, end, fps=DEFAULT_FPS):
     """
     Analyzes barpath returning the deviation of the barbells
-    horizontal movement during reps excluding the top of the 
+    horizontal movement during reps excluding the top of the
     rep where the lifter might reset and adjust the bar
     """
     window = barbell_xy[start:end]
     bar_x = window[:, 0]
     bar_x = bar_x[~np.isnan(bar_x)]
 
-    if len(bar_x) < MIN_FRAMES_BAR_PATH:
+    if len(bar_x) < seconds_to_frames(MIN_BAR_PATH_SECONDS, fps):
         return np.nan
 
     horizontal_dev = np.std(bar_x)
@@ -155,8 +181,8 @@ def analyze_squat(xy, conf, barbell_xy, fps=30):
     on the squat video
     """
     hip, knee, ank = sideSelector(xy, conf)
-    peaks = rep_count(hip, knee)
-    reps = segment_reps(hip, knee, ank, peaks)
+    peaks = rep_count(hip, knee, fps)
+    reps = segment_reps(hip, knee, ank, peaks, fps)
     knee_ang = knee_angle(hip, knee, ank)
     depth = squat_depths(hip,knee)
     hip_heel_alignment = hip_heel(hip, ank, error=HIP_HEEL_ERROR_THRESHOLD)
@@ -164,7 +190,7 @@ def analyze_squat(xy, conf, barbell_xy, fps=30):
     bar_dev = []
 
     for rep in reps:
-        bar_dev.append(bar_path_analysis(barbell_xy, rep["start"], rep["end"]))
+        bar_dev.append(bar_path_analysis(barbell_xy, rep["start"], rep["end"], fps))
     return {
         "total_reps": len(peaks),   # Returns # of total reps
         "reps": reps,               #Segmented reps dict

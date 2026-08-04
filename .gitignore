@@ -16,6 +16,6 @@ backend/data/models/barbell/*.jpg
 backend/data/models/barbell/*.csv
 backend/data/models/barbell/weights/last.pt
 .venv/
-yolov8n.pt
+yolov8*.pt
 eval/videos/
 eval/cache/

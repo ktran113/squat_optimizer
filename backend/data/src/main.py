@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from typing import List, Optional
+import cv2
 import numpy as np
 import os
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +18,17 @@ from database import SessionLocal, init_db
 from models import Session, RepMetric, User
 from auth import hash_password, verify_password, create_access_token, get_current_user_id
 from fastapi import Depends
+
+DEFAULT_FPS = 30
+
+def read_video_fps(path):
+    #the file knows its own frame rate, so do not make the user type it
+    cap = cv2.VideoCapture(path)
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    cap.release()
+    if not fps or fps <= 0 or fps > 240:
+        return DEFAULT_FPS
+    return int(round(fps))
 
 def convert_numpy(obj):
     #converts numpy types to norm python types
@@ -327,9 +339,9 @@ def get_user(user_id: int, current_user_id: int = Depends(get_current_user_id)):
         db.close()
 
 @app.post("/analyze-video")
-async def analyze_squat_endpoint(file: UploadFile = File(...), fps: int = 30, current_user_id: int = Depends(get_current_user_id)):
-    # Input validation
-    if fps < 1 or fps > 240:
+async def analyze_squat_endpoint(file: UploadFile = File(...), fps: Optional[int] = None, current_user_id: int = Depends(get_current_user_id)):
+    # Input validation, fps is optional and only overrides what the video reports
+    if fps is not None and (fps < 1 or fps > 240):
         raise HTTPException(status_code=400, detail="FPS must be between 1 and 240")
 
     if not file.filename:
@@ -351,6 +363,9 @@ async def analyze_squat_endpoint(file: UploadFile = File(...), fps: int = 30, cu
         file.file.close()
 
     try:
+        fps = fps or read_video_fps(tmp_path)
+        print(f"Analyzing at {fps}fps")
+
         #getting keypoints
         print("Running barbell detection")
         raw_barbell_xy, barbell_conf = run_detection(tmp_path, BARBELL_WEIGHTS_PATH)
@@ -365,10 +380,10 @@ async def analyze_squat_endpoint(file: UploadFile = File(...), fps: int = 30, cu
         #savgol filter
         for joints in REQUIRED_KEYPOINTS:
             conf_valid = conf[:, joints] > 0.5      #smooth() expects boloean array
-            xy[: , joints, : ] = smooth(raw_xy[:, joints, :], conf_valid)
-        
+            xy[: , joints, : ] = smooth(raw_xy[:, joints, :], conf_valid, fps)
+
         barbell_conf_valid = barbell_conf > 0.5     #smooth() expects boloean array
-        barbell_xy = smooth(raw_barbell_xy, barbell_conf_valid)
+        barbell_xy = smooth(raw_barbell_xy, barbell_conf_valid, fps)
 
         metrics = analyze_squat(xy, conf, barbell_xy, fps)
 

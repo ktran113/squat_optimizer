@@ -15,7 +15,6 @@ const uploadContent = document.getElementById('upload-content');
 const videoInput = document.getElementById('video-input');
 const fileNameDisplay = document.getElementById('file-name');
 const analyzeBtn = document.getElementById('analyze-btn');
-const fpsInput = document.getElementById('fps');
 const errorMessage = document.getElementById('error-message');
 const resultsSection = document.getElementById('results-section');
 const sessionsList = document.getElementById('sessions-list');
@@ -83,15 +82,9 @@ function handleFileSelect(file) {
 analyzeBtn.addEventListener('click', async function() {
     if (!selectedFile) return;
 
-    const fps = parseInt(fpsInput.value);
-    if (fps < 1 || fps > 240) {
-        showError('FPS must be between 1 and 240');
-        return;
-    }
-    //prep form data
+    //prep form data, the backend reads fps from the video itself
     const formData = new FormData();
     formData.append('file', selectedFile);
-    formData.append('fps', fps);
 
     //show scanning overlay on video
     analyzeBtn.disabled = true;
@@ -101,7 +94,7 @@ analyzeBtn.addEventListener('click', async function() {
     videoPreview.play();
 
     try {
-        const response = await fetch(`${API_URL}/analyze-video?fps=${fps}`, {
+        const response = await fetch(`${API_URL}/analyze-video`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
