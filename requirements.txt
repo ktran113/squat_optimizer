@@ -18,7 +18,7 @@ sqlalchemy
 # Authentication
 python-jose[cryptography]
 passlib[bcrypt]
-bcrypt
+bcrypt<5  # passlib 1.7.4 crashes on bcrypt 5's 72-byte password check
 
 # Environment & utilities
 python-dotenv
