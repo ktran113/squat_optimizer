@@ -186,6 +186,62 @@
     margin-bottom: 1.5rem;
 }
 
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.chart-box {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem 0.9rem;
+    min-width: 0;   /* a canvas would otherwise force the grid track wider than the screen */
+}
+
+.chart-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.chart-header h3 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.chart-note {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-align: right;
+}
+
+.chart-box canvas {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+}
+
+.chart-empty {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 2rem 0;
+}
+
+@media (max-width: 720px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .metric-tile {
     background: var(--bg-raised);
     border: 1px solid var(--border);

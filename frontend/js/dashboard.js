@@ -16,6 +16,7 @@ const videoInput = document.getElementById('video-input');
 const fileNameDisplay = document.getElementById('file-name');
 const analyzeBtn = document.getElementById('analyze-btn');
 const errorMessage = document.getElementById('error-message');
+let lastResults = null;   //kept so the charts can be redrawn on resize
 const resultsSection = document.getElementById('results-section');
 const sessionsList = document.getElementById('sessions-list');
 const videoPreviewWrap = document.getElementById('video-preview-wrap');
@@ -120,6 +121,189 @@ analyzeBtn.addEventListener('click', async function() {
     }
 });
 
+//canvas helpers ------------------------------------------------------------
+
+const CHART_COLORS = {
+    accent: '#00e5cc',
+    amber: '#ffb84d',
+    grid: '#2a2a40',
+    dim: '#55556a',
+    text: '#8888a0'
+};
+
+function prepCanvas(canvas, cssHeight) {
+    //size the backing store to the device pixel ratio so lines stay crisp
+    const ratio = window.devicePixelRatio || 1;
+    const cssWidth = canvas.parentElement.clientWidth - 36;
+    canvas.style.height = cssHeight + 'px';
+    canvas.width = Math.max(1, Math.round(cssWidth * ratio));
+    canvas.height = Math.round(cssHeight * ratio);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
+    return { ctx, w: cssWidth, h: cssHeight };
+}
+
+function drawBarPath(data) {
+    const canvas = document.getElementById('bar-path-chart');
+    const empty = document.getElementById('bar-path-empty');
+    const note = document.getElementById('bar-path-note');
+
+    //nulls are frames where the detector found no bar
+    const pts = (data.bar_path || []).filter(p => p && p[0] !== null && p[1] !== null);
+    if (pts.length < 2) {
+        canvas.style.display = 'none';
+        empty.style.display = 'block';
+        note.textContent = '';
+        return;
+    }
+    canvas.style.display = 'block';
+    empty.style.display = 'none';
+
+    const { ctx, w, h } = prepCanvas(canvas, 220);
+    const path = data.bar_path || [];
+
+    //One panel per rep. Overlaying every rep in a single frame is unreadable
+    //because each rep retraces the same vertical range.
+    const bottoms = (data.reps || []).map(r => r.bottom_frame);
+    const spans = bottoms.length
+        ? bottoms.map((b, i) => {
+            const prev = i > 0 ? Math.round((bottoms[i - 1] + b) / 2) : Math.max(0, 2 * b - path.length);
+            const next = i < bottoms.length - 1 ? Math.round((b + bottoms[i + 1]) / 2) : path.length;
+            return [Math.max(0, prev), Math.min(path.length, next)];
+        })
+        : [[0, path.length]];
+
+    //shared scale across panels so reps are directly comparable
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+    const xMid = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const halfX = Math.max((Math.max(...xs) - Math.min(...xs)) / 2, 4);
+    const yMin = Math.min(...ys), yMax = Math.max(...ys);
+    const ySpan = Math.max(yMax - yMin, 1e-6);
+
+    note.textContent = `${(Math.max(...xs) - Math.min(...xs)).toFixed(0)}px spread`
+        + (bottoms.length ? ` · per rep` : '');
+
+    const padY = 16, labelH = 14;
+    const colW = w / spans.length;
+
+    spans.forEach(([from, to], i) => {
+        const cx = colW * i + colW / 2;
+        const usable = colW * 0.38;
+
+        //centre each rep on its own mean x, which is the value bar_path_dev
+        //takes the standard deviation about, so the picture matches the number
+        const own = [];
+        for (let f = from; f < to; f++) {
+            const p = path[f];
+            if (p && p[0] !== null) own.push(p[0]);
+        }
+        const mean = own.length ? own.reduce((a, b) => a + b, 0) / own.length : xMid;
+
+        const px = v => cx + ((v - mean) / halfX) * usable;
+        const py = v => padY + ((v - yMin) / ySpan) * (h - padY * 2 - labelH);
+
+        //plumb line: a perfectly vertical bar path
+        ctx.strokeStyle = CHART_COLORS.grid;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath();
+        ctx.moveTo(cx, padY);
+        ctx.lineTo(cx, h - padY - labelH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.strokeStyle = CHART_COLORS.amber;
+        ctx.lineWidth = 1.6;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        let started = false;
+        for (let f = from; f < to; f++) {
+            const p = path[f];
+            if (!p || p[0] === null || p[1] === null) { started = false; continue; }
+            started ? ctx.lineTo(px(p[0]), py(p[1])) : ctx.moveTo(px(p[0]), py(p[1]));
+            started = true;
+        }
+        ctx.stroke();
+
+        const bottom = path[bottoms[i]];
+        if (bottom && bottom[0] !== null) {
+            ctx.fillStyle = CHART_COLORS.accent;
+            ctx.beginPath();
+            ctx.arc(px(bottom[0]), py(bottom[1]), 3.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        if (bottoms.length) {
+            ctx.fillStyle = CHART_COLORS.text;
+            ctx.font = '10px system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Rep ${i + 1}`, cx, h - 3);
+        }
+    });
+}
+
+function drawDepthChart(data) {
+    const canvas = document.getElementById('depth-chart');
+    const series = (data.depth_over_time || []).map(v => (v === null ? NaN : v));
+    const finite = series.filter(v => Number.isFinite(v));
+    if (finite.length < 2) return;
+
+    const { ctx, w, h } = prepCanvas(canvas, 220);
+    const pad = 18;
+    const lo = Math.min(...finite), hi = Math.max(...finite);
+    const span = Math.max(hi - lo, 1e-6);
+
+    const px = i => pad + (i / Math.max(series.length - 1, 1)) * (w - pad * 2);
+    //knee-hip shrinks as the lifter descends, so invert to make a squat read as a dip
+    const py = v => pad + (1 - (v - lo) / span) * (h - pad * 2);
+
+    ctx.strokeStyle = CHART_COLORS.grid;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(pad, h - pad);
+    ctx.lineTo(w - pad, h - pad);
+    ctx.stroke();
+
+    ctx.strokeStyle = CHART_COLORS.accent;
+    ctx.lineWidth = 1.6;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    let started = false;
+    series.forEach((v, i) => {
+        if (!Number.isFinite(v)) { started = false; return; }
+        started ? ctx.lineTo(px(i), py(v)) : ctx.moveTo(px(i), py(v));
+        started = true;
+    });
+    ctx.stroke();
+
+    (data.reps || []).forEach(rep => {
+        const f = rep.bottom_frame;
+        if (!Number.isFinite(series[f])) return;
+        ctx.fillStyle = CHART_COLORS.amber;
+        ctx.beginPath();
+        ctx.arc(px(f), py(series[f]), 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = CHART_COLORS.text;
+        ctx.font = '10px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(rep.rep_count, px(f), py(series[f]) + 16);
+    });
+}
+
+function drawCharts(data) {
+    drawBarPath(data);
+    drawDepthChart(data);
+}
+
+//canvas does not reflow on its own, so redraw once resizing settles
+let resizeTimer = null;
+window.addEventListener('resize', function () {
+    if (!lastResults) return;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => drawCharts(lastResults), 150);
+});
+
 function displayResults(data) {
     resultsSection.style.display = 'block';
 
@@ -140,6 +324,10 @@ function displayResults(data) {
         ? (data.bar_path_dev.reduce((a, b) => a + b, 0) / data.bar_path_dev.length).toFixed(1) + 'px'
         : '-';
     document.getElementById('bar-dev').textContent = avgBarDev;
+
+    //charts, drawn after the section is visible so the canvas has a real width
+    drawCharts(data);
+    lastResults = data;
 
     //feedback
     document.getElementById('ai-feedback').textContent = data.ai_feedback || 'No feedback available.';

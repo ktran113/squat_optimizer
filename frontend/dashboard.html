@@ -87,6 +87,26 @@
                 </div>
             </div>
 
+            <div class="charts-grid">
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <h3>Bar Path</h3>
+                        <span id="bar-path-note" class="chart-note"></span>
+                    </div>
+                    <canvas id="bar-path-chart"></canvas>
+                    <p id="bar-path-empty" class="chart-empty" style="display:none;">
+                        No barbell detected in this video.
+                    </p>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <h3>Depth Over Time</h3>
+                        <span class="chart-note">dots mark detected rep bottoms</span>
+                    </div>
+                    <canvas id="depth-chart"></canvas>
+                </div>
+            </div>
+
             <div class="feedback-box">
                 <div class="feedback-header">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
