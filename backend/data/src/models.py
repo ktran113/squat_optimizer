@@ -21,7 +21,7 @@ class Session(Base):
     __tablename__ = "sessions"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=True, index=True)
     video_path =Column(String, nullable=False)
     fps = Column(Integer, default=30)
     total_reps = Column(Integer, nullable=False)
@@ -33,7 +33,7 @@ class Session(Base):
     bar_dev = Column(Float)
     ai_feedback = Column(Text)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     user = relationship("User", back_populates="sessions")
@@ -44,7 +44,7 @@ class RepMetric(Base):
     __tablename__ = 'rep_metrics'
 
     id = Column(Integer, primary_key=True)
-    session_id = Column(Integer, ForeignKey('sessions.id', ondelete='CASCADE'))
+    session_id = Column(Integer, ForeignKey('sessions.id', ondelete='CASCADE'), index=True)
     rep_number = Column(Integer, nullable=False)
     
     bottom_frame = Column(Integer)

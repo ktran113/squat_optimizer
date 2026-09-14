@@ -58,7 +58,7 @@ The weights are committed at `backend/data/models/barbell/weights/best.pt`. `bac
 
 **Prominence-based peak detection.** The first version counted 11 reps in a 2-rep video because small wobbles at the top and bottom of each rep registered as peaks. Requiring each peak to stand out from its surroundings by a minimum prominence removed the false positives. Both ends of the signal are padded so a rep cut off by the start or end of the video is still judged on the side that is visible.
 
-**Frame skipping with interpolation.** Pose and bar position change little between adjacent frames, so running the models on every 2nd and 3rd frame cuts inference work roughly 2x and 3x with little loss in accuracy.
+**Frame skipping with interpolation.** Pose and bar position change little between adjacent frames, so the pose model runs on every 2nd frame and the barbell detector on every 3rd, with positions for skipped frames interpolated. That is 2x and 3x fewer model calls per video.
 
 **Local weights instead of a hosted API.** Barbell detection originally called Roboflow's hosted inference API for every frame. Running the detector locally removed a network dependency and per-request latency from the analysis path.
 
