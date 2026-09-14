@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from typing import List, Optional
 import cv2
+import math
 import numpy as np
 import os
 from fastapi.middleware.cors import CORSMiddleware
@@ -33,11 +34,14 @@ def read_video_fps(path):
 def convert_numpy(obj):
     #converts numpy types to norm python types
     if isinstance(obj, np.ndarray):
-        return obj.tolist()
+        return convert_numpy(obj.tolist())   #recurse so NaN inside arrays is handled
     elif isinstance(obj, (np.integer,)):
         return int(obj)
-    elif isinstance(obj, (np.floating,)):
-        return float(obj)
+    elif isinstance(obj, (np.floating, float)):
+        value = float(obj)
+        #FastAPI serialises with allow_nan=False, so NaN/inf would 500 the request.
+        #null instead lets the frontend show gaps where the bar was not detected.
+        return value if math.isfinite(value) else None
     elif isinstance(obj, (np.bool_,)):
         return bool(obj)
     elif isinstance(obj, dict):

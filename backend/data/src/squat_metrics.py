@@ -198,7 +198,8 @@ def analyze_squat(xy, conf, barbell_xy, fps=30):
         "knee_angle": knee_ang,     #Returns knee angle over entire time series
         "tempo_per_rep": tempo,     #Returns array of tempo of that rep
         "hip_heel_alignment": hip_heel_alignment,   #Returns time series of hip_heel alignment
-        "bar_path_dev": bar_dev     #Returns time series of deviations of the bar path per rep (float)
+        "bar_path_dev": bar_dev,    #Returns time series of deviations of the bar path per rep (float)
+        "bar_path": barbell_xy      #Bar position per frame, NaN where the bar was not found
     }
 
     
